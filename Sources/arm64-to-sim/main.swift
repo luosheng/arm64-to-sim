@@ -177,14 +177,23 @@ struct Patcher {
         }.compactMap { $0 }
     }
     
-    static func extract(inputFileAtPath path: String, withArch arch: String, toPath: String) throws {
+    static func extract(inputFileAtPath path: String, withArch arch: String, toURL: URL) throws {
         try shellOut(to: "lipo", arguments: [
             "-thin",
             arch,
             path,
-            "output",
-            (toPath as NSString).appendingPathComponent("lib.\(arch)")
+            "-output",
+            toURL.appendingPathComponent("lib.\(arch)").path
         ])
+    }
+    
+    static func patch(atPath path: String) throws {
+        let extractionUrl = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: extractionUrl, withIntermediateDirectories: true, attributes: nil)
+        print(extractionUrl)
+        try getArchitectures(atPath: path).forEach { arch in
+            try extract(inputFileAtPath: path, withArch: arch, toURL: extractionUrl)
+        }
     }
 }
 
