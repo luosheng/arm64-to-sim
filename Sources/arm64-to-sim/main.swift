@@ -36,7 +36,7 @@ extension FileHandle {
     }
 }
 
-enum Transmogrifier {
+struct Transmogrifier {
     private static func readBinary(atPath path: String) -> (Data, [Data], Data) {
         guard let handle = FileHandle(forReadingAtPath: path) else {
             fatalError("Cannot open a handle for the file at \(path). Aborting.")
@@ -163,7 +163,7 @@ enum Transmogrifier {
 }
 
 struct Patcher {
-    static func getArchitectures(atPath path: String) throws -> [String] {
+    private static func getArchitectures(atPath path: String) throws -> [String] {
         let output = try shellOut(to: "file", arguments: [path])
         let pattern = #"for architecture (?<arch>\w*)"#
         let regex = try NSRegularExpression(pattern: pattern, options: [])
@@ -178,7 +178,7 @@ struct Patcher {
         }.compactMap { $0 }
     }
     
-    static func extract(inputFileAtPath path: String, withArch arch: String, toURL: URL) throws {
+    private static func extract(inputFileAtPath path: String, withArch arch: String, toURL: URL) throws {
         try shellOut(to: "lipo", arguments: [
             "-thin",
             arch,
