@@ -1,5 +1,6 @@
 import Foundation
 import MachO
+import ShellOut
 
 // support checking for Mach-O `cmd` and `cmdsize` properties
 extension Data {
@@ -157,6 +158,33 @@ enum Transmogrifier {
         
         // save back to disk
         try! reworkedData.write(to: URL(fileURLWithPath: path))
+    }
+}
+
+struct Patcher {
+    static func getArchitectures(atPath path: String) throws -> [String] {
+        let output = try shellOut(to: "file", arguments: [path])
+        let pattern = #"for architecture (?<arch>\w*)"#
+        let regex = try NSRegularExpression(pattern: pattern, options: [])
+        let nsrange = NSRange(output.startIndex..<output.endIndex,
+                              in: output)
+        let matches = regex.matches(in: output, options: [], range: nsrange)
+        return matches.map { match in
+            guard let range = Range(match.range(withName: "arch"), in: output) else {
+                return nil
+            }
+            return String(output[range])
+        }.compactMap { $0 }
+    }
+    
+    static func extract(inputFileAtPath path: String, withArch arch: String, toPath: String) throws {
+        try shellOut(to: "lipo", arguments: [
+            "-thin",
+            arch,
+            path,
+            "output",
+            (toPath as NSString).appendingPathComponent("lib.\(arch)")
+        ])
     }
 }
 
