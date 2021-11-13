@@ -209,6 +209,8 @@ struct Patcher {
         try shellOut(to: "ar", arguments: ["cr", "lib.arm64", "*.o"])
         let url = URL(fileURLWithPath: path)
         try shellOut(to: "lipo", arguments: ["-create", "-output", url.lastPathComponent, "lib.*"])
+        try FileManager.default.removeItem(at: url)
+        try FileManager.default.moveItem(at: extractionUrl.appendingPathComponent(url.lastPathComponent), to: url)
     }
 }
 
