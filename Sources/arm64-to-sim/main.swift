@@ -190,10 +190,25 @@ struct Patcher {
     static func patch(atPath path: String) throws {
         let extractionUrl = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: extractionUrl, withIntermediateDirectories: true, attributes: nil)
-        print(extractionUrl)
+        print(extractionUrl.path)
+        FileManager.default.changeCurrentDirectoryPath(extractionUrl.path)
         try getArchitectures(atPath: path).forEach { arch in
             try extract(inputFileAtPath: path, withArch: arch, toURL: extractionUrl)
         }
+        try shellOut(to: "ar", arguments: ["x", extractionUrl.appendingPathComponent("lib.arm64").path])
+        if let emulator = FileManager.default.enumerator(atPath: extractionUrl.path) {
+            for file in emulator {
+                if let fileString = file as? String {
+                    if fileString.hasSuffix(".o") {
+                        Transmogrifier.processBinary(atPath: extractionUrl.appendingPathComponent(fileString).path)
+                    }
+                }
+            }
+        }
+        try FileManager.default.removeItem(at: extractionUrl.appendingPathComponent("lib.arm64"))
+        try shellOut(to: "ar", arguments: ["cr", "lib.arm64", "*.o"])
+        let url = URL(fileURLWithPath: path)
+        try shellOut(to: "lipo", arguments: ["-create", "-output", url.lastPathComponent, "lib.*"])
     }
 }
 
