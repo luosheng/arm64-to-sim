@@ -139,7 +139,8 @@ enum Transmogrifier {
                 case LC_SYMTAB:
                     return updateSymTab(lc, offset)
                 case LC_BUILD_VERSION:
-                    fatalError("This arm64 binary already contains an LC_BUILD_VERSION load command!")
+                    print("This arm64 binary has already been patched.")
+                    exit(0)
                 default:
                     return lc
                 }
