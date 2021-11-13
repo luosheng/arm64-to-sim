@@ -118,9 +118,6 @@ struct Transmogrifier {
     }
     
     static func processBinary(atPath path: String, minos: UInt32 = 13, sdk: UInt32 = 13) {
-        guard CommandLine.arguments.count > 1 else {
-            fatalError("Please add a path to command!")
-        }
         let (headerData, loadCommandsData, programData) = readBinary(atPath: path)
         
         // `offset` is kind of a magic number here, since we know that's the only meaningful change to binary size
@@ -188,7 +185,7 @@ struct Patcher {
         ])
     }
     
-    static func patch(atPath path: String) throws {
+    static func patch(atPath path: String, minos: UInt32, sdk: UInt32) throws {
         let extractionUrl = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: extractionUrl, withIntermediateDirectories: true, attributes: nil)
         print(extractionUrl.path)
@@ -201,7 +198,7 @@ struct Patcher {
             for file in emulator {
                 if let fileString = file as? String {
                     if fileString.hasSuffix(".o") {
-                        Transmogrifier.processBinary(atPath: extractionUrl.appendingPathComponent(fileString).path)
+                        Transmogrifier.processBinary(atPath: extractionUrl.appendingPathComponent(fileString).path, minos: minos, sdk: sdk)
                     }
                 }
             }
@@ -215,7 +212,18 @@ struct Patcher {
     }
 }
 
+guard CommandLine.arguments.count > 1 else {
+    fatalError("Please add a path to command!")
+}
 let binaryPath = CommandLine.arguments[1]
-let minos = UInt32(CommandLine.arguments[2]) ?? 13
-let sdk = UInt32(CommandLine.arguments[3]) ?? 13
-Transmogrifier.processBinary(atPath: binaryPath, minos: minos, sdk: sdk)
+var minos: UInt32 = 13
+var sdk: UInt32 = 13
+if CommandLine.arguments.count > 3 {
+    if let number = UInt32(CommandLine.arguments[2]) {
+        minos = number
+    }
+    if let number = UInt32(CommandLine.arguments[3]) {
+        sdk = number
+    }
+}
+try Patcher.patch(atPath: binaryPath, minos: minos, sdk: sdk)
