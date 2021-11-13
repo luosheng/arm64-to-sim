@@ -188,10 +188,10 @@ struct Patcher {
     static func patch(atPath path: String, minos: UInt32, sdk: UInt32) throws {
         let extractionUrl = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: extractionUrl, withIntermediateDirectories: true, attributes: nil)
-        print(extractionUrl.path)
+        let url = URL(fileURLWithPath: path).standardized
         FileManager.default.changeCurrentDirectoryPath(extractionUrl.path)
-        try getArchitectures(atPath: path).forEach { arch in
-            try extract(inputFileAtPath: path, withArch: arch, toURL: extractionUrl)
+        try getArchitectures(atPath: url.path).forEach { arch in
+            try extract(inputFileAtPath: url.path, withArch: arch, toURL: extractionUrl)
         }
         try shellOut(to: "ar", arguments: ["x", extractionUrl.appendingPathComponent("lib.arm64").path])
         if let emulator = FileManager.default.enumerator(atPath: extractionUrl.path) {
@@ -205,7 +205,6 @@ struct Patcher {
         }
         try FileManager.default.removeItem(at: extractionUrl.appendingPathComponent("lib.arm64"))
         try shellOut(to: "ar", arguments: ["cr", "lib.arm64", "*.o"])
-        let url = URL(fileURLWithPath: path)
         try shellOut(to: "lipo", arguments: ["-create", "-output", url.lastPathComponent, "lib.*"])
         try FileManager.default.removeItem(at: url)
         try FileManager.default.moveItem(at: extractionUrl.appendingPathComponent(url.lastPathComponent), to: url)
