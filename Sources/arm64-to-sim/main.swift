@@ -30,6 +30,10 @@ extension Arm64ToSim {
     struct Restore: ParsableCommand {
         @Argument(help: "The path of the library to restore.")
         var path: String
+        
+        func run() throws {
+            try Patcher.restore(atPath: path)
+        }
     }
 }
 
