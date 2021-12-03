@@ -1,25 +1,36 @@
 import Foundation
+import ArgumentParser
 
-guard CommandLine.arguments.count > 1 else {
-    fatalError("Please add a path to command!")
+struct Arm64ToSim: ParsableCommand {
+    
+    static var configuration = CommandConfiguration(
+        abstract: "A simple command-line tool for hacking native ARM64 binaries to run on the Apple Silicon iOS Simulator.",
+        version: "1.0.0",
+        subcommands: [Patch.self, Restore.self]
+    )
+    
 }
-let binaryPath = CommandLine.arguments[1]
-var minos: UInt32 = 13
-var sdk: UInt32 = 13
-if let minosStr = ProcessInfo.processInfo.environment["ARM64_TO_SIM_MINOS"],
-    let number = UInt32(minosStr) {
-    minos = number
-}
-if let sdkStr = ProcessInfo.processInfo.environment["ARM64_TO_SIM_SDK"],
-   let number = UInt32(sdkStr) {
-    sdk = number
-}
-if CommandLine.arguments.count > 3 {
-    if let number = UInt32(CommandLine.arguments[2]) {
-        minos = number
+
+extension Arm64ToSim {
+    struct Patch: ParsableCommand {
+        @Argument(help: "The path of the library to patch.")
+        var path: String
+        
+        @Option()
+        var minOS: UInt32 = 13
+        
+        @Option()
+        var sdk: UInt32 = 13
+        
+        func run() throws {
+            try Patcher.patch(atPath: path, minos: minOS, sdk: sdk)
+        }
     }
-    if let number = UInt32(CommandLine.arguments[3]) {
-        sdk = number
+    
+    struct Restore: ParsableCommand {
+        @Argument(help: "The path of the library to restore.")
+        var path: String
     }
 }
-try Patcher.patch(atPath: binaryPath, minos: minos, sdk: sdk)
+
+Arm64ToSim.main()
