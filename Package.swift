@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.5
 import PackageDescription
 
 let package = Package(
@@ -10,13 +10,13 @@ let package = Package(
         .executable(name: "arm64-to-sim", targets: ["arm64-to-sim"])
     ],
     dependencies: [
-        .package(url: "https://github.com/JohnSundell/ShellOut", from: "2.0.0")
+        .package(url: "https://github.com/JohnSundell/ShellOut", from: "2.0.0"),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.0"),
     ],
     targets: [
-        .target(
-            name: "arm64-to-sim",
-            dependencies: [
-                .product(name: "ShellOut", package: "ShellOut")
-            ]),
+        .executableTarget(name: "arm64-to-sim", dependencies: [
+            .product(name: "ShellOut", package: "ShellOut"),
+            .product(name: "ArgumentParser", package: "swift-argument-parser"),
+        ]),
     ]
 )
