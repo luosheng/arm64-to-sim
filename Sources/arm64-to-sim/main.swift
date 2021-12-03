@@ -186,9 +186,9 @@ struct Patcher {
     }
     
     static func patch(atPath path: String, minos: UInt32, sdk: UInt32) throws {
+        let url = URL(fileURLWithPath: path).standardized
         let extractionUrl = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: extractionUrl, withIntermediateDirectories: true, attributes: nil)
-        let url = URL(fileURLWithPath: path).standardized
         FileManager.default.changeCurrentDirectoryPath(extractionUrl.path)
         try getArchitectures(atPath: url.path).forEach { arch in
             try extract(inputFileAtPath: url.path, withArch: arch, toURL: extractionUrl)
@@ -206,8 +206,9 @@ struct Patcher {
         try FileManager.default.removeItem(at: extractionUrl.appendingPathComponent("lib.arm64"))
         try shellOut(to: "ar", arguments: ["cr", "lib.arm64", "*.o"])
         try shellOut(to: "lipo", arguments: ["-create", "-output", url.lastPathComponent, "lib.*"])
-        try FileManager.default.removeItem(at: url)
-        try FileManager.default.moveItem(at: extractionUrl.appendingPathComponent(url.lastPathComponent), to: url)
+        try FileManager.default.moveItem(at: url, to: url.appendingPathExtension("original"))
+        try FileManager.default.moveItem(at: extractionUrl.appendingPathComponent(url.lastPathComponent), to: url.appendingPathExtension("patch"))
+        try FileManager.default.createSymbolicLink(at: url, withDestinationURL: url.appendingPathExtension("patch"))
     }
 }
 
