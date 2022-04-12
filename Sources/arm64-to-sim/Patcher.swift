@@ -11,7 +11,7 @@ import ShellOut
 struct Patcher {
     
     private static let ORIGINAL_EXTENSION = "original"
-    private static let PATCH_EXTENSION = "patch"
+    private static let PATCH_EXTENSION = "patched"
     
     private static func getArchitectures(atUrl url: URL) throws -> [String] {
         let output = try shellOut(to: "file", arguments: [url.path])
