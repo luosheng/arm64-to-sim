@@ -48,8 +48,13 @@ struct Patcher {
         
         let extractionUrl = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: extractionUrl, withIntermediateDirectories: true, attributes: nil)
-        try getArchitectures(atUrl: url).forEach { arch in
-            try extract(inputFileAtUrl: url, withArch: arch, toURL: extractionUrl)
+        let archs = try getArchitectures(atUrl: url)
+        if archs.count == 0 {
+            try FileManager.default.copyItem(at: url, to: extractionUrl.appendingPathComponent("lib.arm64"))
+        } else{
+            try archs.forEach { arch in
+                try extract(inputFileAtUrl: url, withArch: arch, toURL: extractionUrl)
+            }
         }
         FileManager.default.changeCurrentDirectoryPath(extractionUrl.path)
         try shellOut(to: "ar", arguments: ["x", extractionUrl.appendingPathComponent("lib.arm64").path])
